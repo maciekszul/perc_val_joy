@@ -28,6 +28,12 @@ right_loc = [alt_loc[0], alt_loc[1]]
 scale_range = [210, 330]
 scale_radius = 7
 
+fix_time = 1
+mid_time = 2
+pre_scale_time = 1
+iti_time = 2
+
+
 # monitor settings
 x230 = (28, 56, (1366, 768))
 lab = (53, 65, (1920, 1080))
@@ -49,6 +55,14 @@ win = visual.Window(
     monitor=mon
 )
 
+framerate = win.getActualFrameRate(
+    nIdentical=10,
+    nMaxFrames=120,
+    nWarmUpFrames=10,
+    threshold=1
+)
+
+framerate_r = np.round(framerate)
 
 # hardware settings
 
@@ -253,9 +267,13 @@ for i in range(3):
         else:
             break
 
-    blank.draw()
+    fix = core.StaticPeriod(screenHz=framerate_r)
+    draw_cue()
     win.flip()
-    core.wait(1)
+    fix.start(fix_time)
+    # operations during fix
+    fix.complete()
+
 
     while True:
         x, y = joy.getX(), -joy.getY()
@@ -289,9 +307,13 @@ for i in range(3):
 
         win.flip()
 
+    mid = core.StaticPeriod(screenHz=framerate_r)
     blank.draw()
     win.flip()
-    core.wait(2)
+    mid.start(mid_time)
+    # operations during fix
+    mid.complete()
+
 
     # scale
 
@@ -304,9 +326,12 @@ for i in range(3):
         else:
             break
 
+    pre_scale = core.StaticPeriod(screenHz=framerate_r)
     blank.draw()
     win.flip()
-    core.wait(1)
+    pre_scale.start(pre_scale_time)
+    # operations during fix
+    pre_scale.complete()
 
     while True:
         x, y = joy.getX(), -joy.getY()
@@ -316,6 +341,7 @@ for i in range(3):
         if (radius > 0.7) & (angle > np.deg2rad(scale_range[0])) & (angle < np.deg2rad(scale_range[1])):
             scale_cursor.opacity = 1
             if radius > 0.85:
+                core.wait(1)
                 break
         else:
             scale_cursor.opacity = 0
@@ -328,7 +354,13 @@ for i in range(3):
         if event.getKeys(keyList=['q'], timeStamped=False):
             win.close()
             core.quit()
-
+    
+    iti = core.StaticPeriod(screenHz=framerate_r)
+    draw_cue()
+    win.flip()
+    iti.start(iti_time)
+    # operations during fix
+    iti.complete()
 
 win.close()
 core.quit()
