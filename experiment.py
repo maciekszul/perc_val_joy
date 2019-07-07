@@ -25,6 +25,9 @@ start_loc = [0, -6]
 left_loc = [-alt_loc[0], alt_loc[1]]
 right_loc = [alt_loc[0], alt_loc[1]]
 
+scale_range = [210, 330]
+scale_radius = 7
+
 # monitor settings
 x230 = (28, 56, (1366, 768))
 lab = (53, 65, (1920, 1080))
@@ -175,6 +178,38 @@ cursor = visual.Circle(
     lineColor='white'
 )
 
+
+# scale
+scale_circle = visual.Circle(
+    win,
+    radius=scale_radius,
+    edges=360,
+    units='deg'
+)
+
+scale_vert = np.array(scale_circle.vertices)
+scale_r = scale_vert[scale_range[0]:scale_range[1]+1]
+scale = visual.ShapeStim(
+    win,
+    vertices=scale_r,
+    lineColor="white",
+    lineWidth=5,
+    closeShape=False,
+    ori=90
+)
+
+scale_cursor = visual.Circle(
+    win,
+    radius=0.1,
+    edges=40,
+    units='deg',
+    fillColor='green',
+    lineColor='green',
+    opacity=0
+)
+
+# text
+
 text_stim = visual.TextStim(
     win,
     text="xxx",
@@ -222,8 +257,7 @@ for i in range(3):
     win.flip()
     core.wait(1)
 
-    while not event.getKeys(keyList=['q'], timeStamped=False):
-        
+    while True:
         x, y = joy.getX(), -joy.getY()
         pos_x, pos_y = [x*14 + start_loc[0], y*14 + start_loc[1]]
         
@@ -257,9 +291,44 @@ for i in range(3):
 
     blank.draw()
     win.flip()
-    core.wait(1)
+    core.wait(2)
 
     # scale
+
+    while True:
+        x, y = joy.getX(), -joy.getY()
+        pos_x, pos_y = [x*14 + start_loc[0], y*14 + start_loc[1]]
+        if not misc.point_in_poly(pos_x, pos_y, sz_loc):
+            joy_command.draw()
+            win.flip()
+        else:
+            break
+
+    blank.draw()
+    win.flip()
+    core.wait(1)
+
+    while True:
+        x, y = joy.getX(), -joy.getY()
+        angle, radius = ct.cart2pol(x, y, units="rad")
+        scale_cursor.pos = ct.pol2cart(angle, scale_radius, units="rad")
+        angle = np.abs(angle + np.pi)
+        if (radius > 0.7) & (angle > np.deg2rad(scale_range[0])) & (angle < np.deg2rad(scale_range[1])):
+            scale_cursor.opacity = 1
+            if radius > 0.85:
+                break
+        else:
+            scale_cursor.opacity = 0
+        text_stim.text = "X:{0}\nY: {1}\nANG: {2}\nRAD: {3}".format(x,y, angle, radius)
+        text_stim.draw()
+        scale.draw()
+        scale_cursor.draw()
+        win.flip()
+
+        if event.getKeys(keyList=['q'], timeStamped=False):
+            win.close()
+            core.quit()
+
 
 win.close()
 core.quit()
