@@ -12,6 +12,16 @@ import pandas as pd
 import misc
 
 
+# session info
+
+subj_ID = str(1).zfill(4)
+
+timestamp = core.getAbsTime()
+
+misc.mk_dir("data")
+path_data = "data/{}".format(subj_ID)
+misc.mk_dir(path_data)
+
 # display settings
 
 background_color = "#939393"
@@ -26,7 +36,7 @@ left_loc = [-alt_loc[0], alt_loc[1]]
 right_loc = [alt_loc[0], alt_loc[1]]
 
 scale_range = [210, 330]
-scale_radius = 7
+scale_radius = 5
 
 fix_time = 1
 mid_time = 2
@@ -214,7 +224,7 @@ scale = visual.ShapeStim(
 
 scale_cursor = visual.Circle(
     win,
-    radius=0.1,
+    radius=0.5,
     edges=40,
     units='deg',
     fillColor='green',
@@ -253,10 +263,59 @@ joy_command = visual.TextStim(
     opacity=1
 )
 
+# data logging settings
+columns = [
+    "ID",
+    "age",
+    "gender",
+    "trial"
+]
+
+data_dict = {i: [] for i in columns}
+
+instructions = [
+    "Instruction 1",
+    "Instruction 2",
+    "Instruction 3"
+    "Instruction 4",
+    "Instruction 5",
+    "Instruction 6"
+]
+
+for text in instructions:
+    text_stim.text = text
+    text_stim.draw()
+    win.flip()
+    event.waitKeys(
+        maxWait=360, 
+        keyList=["space"], 
+        modifiers=False, 
+        timeStamped=False
+    )
+
+blank.draw()
+win.flip()
+core.wait(5)
+
+# experiment clock
+exp_clock = clock.MonotonicClock()
+
+exp_start = exp_clock.getTime() ###
+
 for i in range(3):
     left_img.setImage("img/hotdog.jpg")
     right_img.setImage("img/money.jpg")
     event.clearEvents()
+
+    x_dec = []
+    y_dec = []
+    t_dec = []
+
+    x_scale = []
+    y_scale = []
+    t_scale = []
+
+    wait_for_joy_1 = exp_clock.getTime() ###
 
     while True:
         x, y = joy.getX(), -joy.getY()
@@ -267,18 +326,25 @@ for i in range(3):
         else:
             break
 
+    
+    fix_start = exp_clock.getTime() ###
     fix = core.StaticPeriod(screenHz=framerate_r)
     draw_cue()
     win.flip()
     fix.start(fix_time)
     # operations during fix
     fix.complete()
-
+    
+    stim_onset = exp_clock.getTime() ###
 
     while True:
         x, y = joy.getX(), -joy.getY()
         pos_x, pos_y = [x*14 + start_loc[0], y*14 + start_loc[1]]
         
+        x_dec.append(x)
+        y_dec.append(y)
+        t_dec.append(exp_clock.getTime())
+
         cursor.pos = [pos_x, pos_y]
         text_stim.text = "X:{0}\nY: {1}\nPosX: {2}\nPosY: {3}".format(x,y, pos_x, pos_y)
         
@@ -307,16 +373,28 @@ for i in range(3):
 
         win.flip()
 
+    trial_end = exp_clock.getTime() ###
+
     mid = core.StaticPeriod(screenHz=framerate_r)
     blank.draw()
     win.flip()
     mid.start(mid_time)
-    # operations during fix
+
+    joystick_output = np.vstack([np.array(x_dec), np.array(y_dec), np.array(t_dec)])
+    joy_path = op.join(path_data, "trial_{0}_{1}_{2}".format(subj_ID, str(i).zfill(4), timestamp))
+    np.save(joy_path, joystick_output)
+
+    del x_dec
+    del y_dec
+    del t_dec
+    del joystick_output
+    
     mid.complete()
 
 
     # scale
 
+    wait_for_joy_2 = exp_clock.getTime() ###
     while True:
         x, y = joy.getX(), -joy.getY()
         pos_x, pos_y = [x*14 + start_loc[0], y*14 + start_loc[1]]
@@ -326,6 +404,7 @@ for i in range(3):
         else:
             break
 
+    pre_scale_onset = exp_clock.getTime() ###
     pre_scale = core.StaticPeriod(screenHz=framerate_r)
     blank.draw()
     win.flip()
@@ -333,8 +412,15 @@ for i in range(3):
     # operations during fix
     pre_scale.complete()
 
+    scale_onset = exp_clock.getTime() ###
+
     while True:
         x, y = joy.getX(), -joy.getY()
+
+        x_scale.append(x)
+        y_scale.append(y)
+        t_scale.append(exp_clock.getTime())
+
         angle, radius = ct.cart2pol(x, y, units="rad")
         scale_cursor.pos = ct.pol2cart(angle, scale_radius, units="rad")
         angle = np.abs(angle + np.pi)
@@ -355,12 +441,25 @@ for i in range(3):
             win.close()
             core.quit()
     
+    iti_onset = exp_clock.getTime() ###
+
     iti = core.StaticPeriod(screenHz=framerate_r)
     draw_cue()
     win.flip()
     iti.start(iti_time)
-    # operations during fix
-    iti.complete()
+    # operations during iti
+
+    joystick_output = np.vstack([np.array(x_scale), np.array(y_scale), np.array(t_scale)])
+    joy_path = op.join(path_data, "scale_{0}_{1}_{2}".format(subj_ID, str(i).zfill(4), timestamp))
+    np.save(joy_path, joystick_output)
+
+    del x_scale
+    del y_scale
+    del t_scale
+    del joystick_output
+
+    print(iti.complete())
+
 
 win.close()
 core.quit()

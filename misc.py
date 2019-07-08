@@ -1,4 +1,5 @@
 import numpy as np
+import os
 
 def point_in_poly(x, y, poly, include_edges=True):
     '''
@@ -60,3 +61,8 @@ def localise_polygon(location, vertices):
     vert[:,1] = vert[:,1] + y
 
     return vert
+
+
+def mk_dir(directory):
+    if not os.path.exists(directory):
+        os.makedirs(directory)
