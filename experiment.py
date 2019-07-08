@@ -28,14 +28,16 @@ background_color = "#939393"
 exp_gray = "#848484"
 
 alt_size = 2
-img_size = 3
-alt_loc = [6, 6]
+img_size = 6
+alt_loc = [9.5, 3]
+resp_size = img_size + 0.5
 start_loc = [0, -6]
+
 
 left_loc = [-alt_loc[0], alt_loc[1]]
 right_loc = [alt_loc[0], alt_loc[1]]
 
-scale_range = [210, 330]
+scale_range = [180, 360]
 scale_radius = 5
 
 fix_time = 1
@@ -45,7 +47,7 @@ iti_time = 2
 
 
 # monitor settings
-x230 = (28, 56, (1366, 768))
+x230 = (28, 45, (1366, 768))
 lab = (53, 65, (1920, 1080))
 
 width, dist, res = x230
@@ -104,7 +106,6 @@ line1 = visual.ShapeStim(
     lineColor=background_color
 )
 
-
 line2 = visual.ShapeStim(
     win,
     vertices=[[0 - th, sz*2],
@@ -145,10 +146,11 @@ left_square = visual.Rect(
     win,
     width=alt_size,
     height=alt_size,
-    color="blue",
     pos=left_loc,
     lineWidth=3,
-    opacity=0.5
+    fillColor=None,
+    lineColor="blue",
+    opacity=1
 )
 
 l_sq_loc = misc.localise_polygon(
@@ -167,10 +169,11 @@ right_square = visual.Rect(
     win,
     width=alt_size,
     height=alt_size,
-    color="red",
     pos=right_loc,
-    lineWidth=5,
-    opacity=0.5
+    lineWidth=3,
+    fillColor=None,
+    lineColor="red",
+    opacity=1
 )
 
 r_sq_loc = misc.localise_polygon(
@@ -202,6 +205,16 @@ cursor = visual.Circle(
     lineColor='white'
 )
 
+resp_ind = visual.Rect(
+    win,
+    width=resp_size,
+    height=resp_size,
+    pos=left_loc,
+    lineWidth=3,
+    fillColor="green",
+    lineColor="green",
+    opacity=1
+)
 
 # scale
 scale_circle = visual.Circle(
@@ -219,7 +232,8 @@ scale = visual.ShapeStim(
     lineColor="white",
     lineWidth=5,
     closeShape=False,
-    ori=90
+    ori=90,
+    pos=start_loc
 )
 
 scale_cursor = visual.Circle(
@@ -359,17 +373,33 @@ for i in range(3):
         
         if misc.point_in_poly(pos_x, pos_y, l_sq_loc) :
             left_square.lineColor = "black"
+            resp_ind.pos = left_loc
+            resp_ind.opacity = 1
+            resp_ind.draw()
+            left_img.draw()
+            right_img.draw()
+            text_stim.draw()
             win.flip()
+            core.wait(1)
             break
         else:
             left_square.lineColor = "blue"
+            resp_ind.opacity = 0
 
         if misc.point_in_poly(pos_x, pos_y, r_sq_loc):
             right_square.lineColor = "black"
+            resp_ind.pos = right_loc
+            resp_ind.opacity = 1
+            resp_ind.draw()
+            left_img.draw()
+            right_img.draw()
+            text_stim.draw()
             win.flip()
+            core.wait(1)
             break
         else:
             right_square.lineColor = "red"
+            resp_ind.opacity = 0
 
         win.flip()
 
@@ -422,17 +452,23 @@ for i in range(3):
         t_scale.append(exp_clock.getTime())
 
         angle, radius = ct.cart2pol(x, y, units="rad")
-        scale_cursor.pos = ct.pol2cart(angle, scale_radius, units="rad")
+        s_cur_pos_x, s_cur_pos_y = ct.pol2cart(angle, scale_radius, units="rad")
+        scale_cursor.pos = (s_cur_pos_x + start_loc[0], s_cur_pos_y + start_loc[1])
         angle = np.abs(angle + np.pi)
         if (radius > 0.7) & (angle > np.deg2rad(scale_range[0])) & (angle < np.deg2rad(scale_range[1])):
             scale_cursor.opacity = 1
-            if radius > 0.85:
+            if radius > 0.9:
+                scale.draw()
+                scale_cursor.draw()
+                win.flip()
                 core.wait(1)
                 break
         else:
             scale_cursor.opacity = 0
         text_stim.text = "X:{0}\nY: {1}\nANG: {2}\nRAD: {3}".format(x,y, angle, radius)
         text_stim.draw()
+        left_img.draw()
+        right_img.draw()
         scale.draw()
         scale_cursor.draw()
         win.flip()
