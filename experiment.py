@@ -15,6 +15,10 @@ import misc
 # session info
 
 subj_ID = str(1).zfill(4)
+subj_file = "CB2_40_pairs.csv"
+exp_cond = pd.read_csv(subj_file)
+exp_cond = exp_cond.to_dict("list")
+trial_am = len(exp_cond["Item1"])
 
 timestamp = core.getAbsTime()
 
@@ -26,6 +30,11 @@ misc.mk_dir(path_data)
 
 background_color = "#939393"
 exp_gray = "#848484"
+
+size_image = "img/size2.png"
+pref_image = "img/heart.png"
+cond_size = 2
+cond_loc = [0, 0]
 
 alt_size = 2
 img_size = 6
@@ -39,6 +48,8 @@ right_loc = [alt_loc[0], alt_loc[1]]
 
 scale_range = [180, 360]
 scale_radius = 5
+
+tick_size = 1
 
 fix_time = 1
 mid_time = 2
@@ -97,10 +108,10 @@ circle = visual.Circle(
 
 line1 = visual.ShapeStim(
     win,
-    vertices=[[sz, 0 + th],
-              [-sz*2, 0 + th],
-              [-sz*2, 0 - th],
-              [sz*2, 0 - th]],
+    vertices=[[sz*1.1, 0 + th],
+              [-sz*1.1, 0 + th],
+              [-sz*1.1, 0 - th],
+              [sz*1.1, 0 - th]],
     units='deg',
     fillColor=background_color,
     lineColor=background_color
@@ -108,10 +119,10 @@ line1 = visual.ShapeStim(
 
 line2 = visual.ShapeStim(
     win,
-    vertices=[[0 - th, sz*2],
-             [0 + th, sz*2],
-             [0 + th, -sz*2],
-             [0 - th, -sz*2]],
+    vertices=[[0 - th, sz*1.1],
+             [0 + th, sz*1.1],
+             [0 + th, -sz*1.1],
+             [0 - th, -sz*1.1]],
     units='deg',
     fillColor=background_color,
     lineColor=background_color)
@@ -134,6 +145,13 @@ def draw_cue():
 
 
 # stimuli
+
+cond_img = visual.ImageStim(
+    win,
+    image=None,
+    size=[cond_size, cond_size],
+    pos=cond_loc
+)
 
 left_img = visual.ImageStim(
     win,
@@ -309,16 +327,25 @@ for text in instructions:
 
 blank.draw()
 win.flip()
-core.wait(5)
+core.wait(1)
 
 # experiment clock
 exp_clock = clock.MonotonicClock()
 
 exp_start = exp_clock.getTime() ###
 
+# for i in range(trial_am):
 for i in range(3):
-    left_img.setImage("img/hotdog.jpg")
-    right_img.setImage("img/money.jpg")
+    left_img.setImage("img/{}".format(exp_cond["Item1"][i]))
+    right_img.setImage("img/{}".format(exp_cond["Item2"][i]))
+
+    if exp_cond["ratType"][i] == "rate_p":
+        cond_img.setImage(size_image)
+        
+    if exp_cond["ratType"][i] == "rate_v":
+        cond_img.setImage(pref_image)
+
+
     event.clearEvents()
 
     x_dec = []
@@ -361,7 +388,8 @@ for i in range(3):
 
         cursor.pos = [pos_x, pos_y]
         text_stim.text = "X:{0}\nY: {1}\nPosX: {2}\nPosY: {3}".format(x,y, pos_x, pos_y)
-        
+
+        cond_img.draw()
         left_img.draw()
         right_img.draw()
         text_stim.draw()
@@ -402,6 +430,10 @@ for i in range(3):
             resp_ind.opacity = 0
 
         win.flip()
+
+        if event.getKeys(keyList=['q'], timeStamped=False):
+            win.close()
+            core.quit()
 
     trial_end = exp_clock.getTime() ###
 
