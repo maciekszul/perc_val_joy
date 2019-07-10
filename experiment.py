@@ -308,7 +308,7 @@ data_dict = {i: [] for i in columns}
 instructions = [
     "Instruction 1",
     "Instruction 2",
-    "Instruction 3"
+    "Instruction 3",
     "Instruction 4",
     "Instruction 5",
     "Instruction 6"
@@ -335,14 +335,14 @@ exp_clock = clock.MonotonicClock()
 exp_start = exp_clock.getTime() ###
 
 # for i in range(trial_am):
-for i in range(3):
+for i in range(9,12):
     left_img.setImage("img/{}".format(exp_cond["Item1"][i]))
     right_img.setImage("img/{}".format(exp_cond["Item2"][i]))
 
     if exp_cond["ratType"][i] == "rate_p":
         cond_img.setImage(size_image)
         
-    if exp_cond["ratType"][i] == "rate_v":
+    elif exp_cond["ratType"][i] == "rate_v":
         cond_img.setImage(pref_image)
 
 
